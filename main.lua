@@ -10,8 +10,8 @@ done - revamp hud similar to wind waker
 done - detect max arrows and bombs - change text color when we have the max
 
 started - fix hud transitions - it goes crazy when switching screens
+started - save last known x y zr items to a file and load on start
 
-save last known x y zr items to a file and load on start
 polish transitions in general - example: in the item screen you can see all the items before it draws the new stuff over the top
 bottles, we only have a dummy sprite
 lantern issues - doesn't come out without turning on immediately
@@ -49,6 +49,9 @@ CurrentItem = {--Current Item Assignment
 	r = 0,
 	zr = 0
 }
+
+package.loaded[base_folder .. "save_data"] = nil
+save_data = require(base_folder .. "save_data")
 
 local GamepadState = {-- Current Emulated Gamepad State
 	KeyboardState = 0,
@@ -138,7 +141,8 @@ do -- main()
 
 		emu.frameadvance()
 	end
-
+	--load saved buttons before entering main loop
+	save_data.load_buttons()
 
 	while (true) do--main loop
 		GamepadState.Update()
@@ -196,6 +200,12 @@ do -- main()
 				-- Let A button function on the save button
 				if(ItemCursor == static.INVENTORY_SAVE_POS) then
 					joypad.set({A=GamepadState.a})
+						
+					if(GamepadState.a) then	--TODO: this saves the button settings as soon as we reach
+											--      the save menu, this needs to be changed to when we
+											--      actually write the save data
+						save_data.save_buttons()
+					end						
 				-- Otherwise select whatever item we're on with x y or r
 				else
 					joypad.set({A=(GamepadState.x or GamepadState.y or GamepadState.r)})
