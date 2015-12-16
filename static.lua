@@ -5,7 +5,7 @@ local static = {
 	-- 02034491 start page, use indicator instead
 	-- 020344a4 start indicator 00 or 0E when not in start menu, start page when in menu
 	-- 030010D0 start menu open, 1 = true, use indicator instead
-	MENU_STATUS_UNINIT = 0x00,
+	MENU_STATUS_UNOPENED = 0x00,
 	MENU_STATUS_ITEMS = 0x01,
 	MENU_STATUS_CLOSED = 0x0e,
 
