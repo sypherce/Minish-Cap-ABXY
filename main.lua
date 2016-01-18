@@ -11,7 +11,9 @@ done - detect max arrows and bombs - change text color when we have the max
 
 started - fix hud transitions - it goes crazy when switching screens
 started - save last known x y zr items to a file and load on start
+		- this is done, but probably should be put into the save state instead
 
+Deal with folder issues. probably should check if a file exists before accessed and display an error		
 polish transitions in general - example: in the item screen you can see all the items before it draws the new stuff over the top
 bottles, we only have a dummy sprite
 lantern issues - doesn't come out without turning on immediately
@@ -19,39 +21,25 @@ polish code
 ]]--
 
 -- relative folder - global variable
-base_folder = "Lua/MinishCap/"
+base_folder = "./Lua/MinishCap/"
 
+--this clears out any #include that might be left in memory
 package.loaded[base_folder .. "addresses"] = nil
-addr = require(base_folder .. "addresses")
-
 package.loaded[base_folder .. "static"] = nil
-static = require(base_folder .. "static")
-
 package.loaded[base_folder .. "inventory"] = nil
-inventory = require(base_folder .. "inventory")
-
 package.loaded[base_folder .. "config"] = nil
-local config = require(base_folder .. "config")
-
 package.loaded[base_folder .. "draw"] = nil
-local draw = require(base_folder .. "draw")
-
 package.loaded[base_folder .. "gba_memory"] = nil
-gba_memory = require(base_folder .. "gba_memory")
-
--- global
-CurrentItem = {--Current Item Assignment
-	a = 0,
-	b = 0,
-	x = 0,
-	y = 0,
-	l = 0,
-	r = 0,
-	zr = 0
-}
-
 package.loaded[base_folder .. "save_data"] = nil
-save_data = require(base_folder .. "save_data")
+
+--#include
+--local addr = require(base_folder .. "addresses")
+local static = require(base_folder .. "static")
+local inventory = require(base_folder .. "inventory")
+local config = require(base_folder .. "config")
+local draw = require(base_folder .. "draw")
+local gba_memory = require(base_folder .. "gba_memory")
+local save_data = require(base_folder .. "save_data")
 
 local GamepadState = {-- Current Emulated Gamepad State
 	KeyboardState = 0,
@@ -78,7 +66,7 @@ GamepadState.Update = function ()
 end
 
 function DebugLog(text)
-	if (config.Debug) then
+	if (config.debug == true) then
 		console.log(text)
 	end
 end
@@ -127,7 +115,7 @@ do -- main()
 	-- wait for main game
 	--TODO: check this. we haven't checked it in a long time and we don't even jump into the start menu anymore	
 	while (gba_memory.MenuHasBeenActive() == false) do
-		local SpriteB = ReadSpriteByTile(static.TILE_ID.B_BUTTON)
+		local SpriteB = gba_memory.ReadSpriteByTile(static.TILE_ID.B_BUTTON)
 		-- if the B sprite is visible, the start menu will work
 		if (SpriteB ~= nil) then
 			emu.frameadvance() -- advance a frame or the next part won't work
@@ -142,16 +130,15 @@ do -- main()
 		emu.frameadvance()
 	end
 	--load saved buttons before entering main loop
-	save_data.load_buttons()
-
+--	save_data.load_buttons()
 	while (true) do--main loop
 		GamepadState.Update()
 		local ItemCursor = gba_memory.handleItemCursor()
 
 		--set main buttons
-		CurrentItem.b = inventory.HasSword()
-		CurrentItem.l = inventory.HasBoots()
-		CurrentItem.zr = inventory.HasSheild()
+		inventory.CurrentItem.b = inventory.HasSword()
+		inventory.CurrentItem.l = inventory.HasBoots()
+		inventory.CurrentItem.zr = inventory.HasSheild()
 
 		--this part takes care of the juggle work between the extra virtual buttons and the real GBA buttons
 		--we are basically setting up the data here, we'll press everything in the next section
@@ -160,32 +147,32 @@ do -- main()
 			if (gba_memory.MenuActive()) then
 				local SelectedItem = gba_memory.GetSelectedItem()
 				if GamepadState.r == true then
-					CurrentItem.r, CurrentItem.x, CurrentItem.y = SetItemValue(CurrentItem.r, CurrentItem.x, CurrentItem.y, SelectedItem)
+					inventory.CurrentItem.r, inventory.CurrentItem.x, inventory.CurrentItem.y = SetItemValue(inventory.CurrentItem.r, inventory.CurrentItem.x, inventory.CurrentItem.y, SelectedItem)
 				elseif GamepadState.x == true then
-					CurrentItem.x, CurrentItem.r, CurrentItem.y = SetItemValue(CurrentItem.x, CurrentItem.r, CurrentItem.y, SelectedItem)
+					inventory.CurrentItem.x, inventory.CurrentItem.r, inventory.CurrentItem.y = SetItemValue(inventory.CurrentItem.x, inventory.CurrentItem.r, inventory.CurrentItem.y, SelectedItem)
 				elseif GamepadState.y == true then
-					CurrentItem.y, CurrentItem.r, CurrentItem.x = SetItemValue(CurrentItem.y, CurrentItem.r, CurrentItem.x, SelectedItem)
+					inventory.CurrentItem.y, inventory.CurrentItem.r, inventory.CurrentItem.x = SetItemValue(inventory.CurrentItem.y, inventory.CurrentItem.r, inventory.CurrentItem.x, SelectedItem)
 				end
 			--or if we're in the field
 			else
 				-- this fixes the sword not showing on the "B" button until used
 				-- and the last used "A" item showing on "A"
 				inventory.SetCurrentItem(1, 0)
-				inventory.SetCurrentItem(2, CurrentItem.b)
+				inventory.SetCurrentItem(2, inventory.CurrentItem.b)
 
 				-- here we set the current item based on the `virtual gamepad` state
 				-- A is the action key now so we can skip it
 				-- B and ZL don't change, so we skip them too
 				if (GamepadState.x == true) then
-					inventory.SetCurrentItem(1, CurrentItem.x)
+					inventory.SetCurrentItem(1, inventory.CurrentItem.x)
 				elseif (GamepadState.y == true) then
-					inventory.SetCurrentItem(1, CurrentItem.y)
+					inventory.SetCurrentItem(1, inventory.CurrentItem.y)
 				elseif (GamepadState.l == true) then
-					inventory.SetCurrentItem(1, CurrentItem.l)
+					inventory.SetCurrentItem(1, inventory.CurrentItem.l)
 				elseif (GamepadState.r == true) then
-					inventory.SetCurrentItem(1, CurrentItem.r)
+					inventory.SetCurrentItem(1, inventory.CurrentItem.r)
 				elseif (GamepadState.zr == true) then
-					inventory.SetCurrentItem(1, CurrentItem.zr)
+					inventory.SetCurrentItem(1, inventory.CurrentItem.zr)
 				end
 			end
 		end
@@ -238,13 +225,14 @@ do -- main()
 					--all status checks are within this function
 					draw.ItemsMenuHud()
 				end
+			elseif(gba_memory.ItemsMenuDeactivating()) then -- if we're exiting the menu
+					draw.HideRealHudItems()	--keep hiding the hud
 			elseif (gba_memory.DialogActive() == false) then
 				--draw normal Hud
 				--all status checks are within this function
 				draw.Hud()
 			end
 		end
-
 		emu.frameadvance()
 	end
 end

@@ -28,6 +28,8 @@ local addr = {
 
 	gba_sprite_base = 0x040020,
 
+	-- 0200008F = page changing status
+	start_page_changing = 0x008F, -- 0 = true
 	-- 02000090 = item pos 0
 	item_pos_base = 0x0090, -- 0(90)>15(9f)
 
@@ -44,6 +46,7 @@ local addr = {
 
 	temp_items_or_world = 0x032ec0, -- 2,3 = items
 	going_to_menu = 0x032ec2, -- 1 = true
+	menu_banner_y_position = 0x0344a6, -- 0 = visible, 16=hidden
 }
 
 function addr.GBASprite(number)

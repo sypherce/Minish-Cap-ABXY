@@ -1,3 +1,5 @@
+local addr = require(base_folder .. "addresses")
+local static = require(base_folder .. "static")
 
 local inventory = {
 	PauseMenu = bit.lshift(1, 0),
@@ -29,6 +31,16 @@ local inventory = {
 	PegasusBoots = bit.lshift(1, 2),
 	Unknown = bit.lshift(1, 4),
 	Ocarina = bit.lshift(1, 6),
+
+	CurrentItem = {--Current Item Assignment
+		a = 0,
+		b = 0,
+		x = 0,
+		y = 0,
+		l = 0,
+		r = 0,
+		zr = 0
+	}
 }
 
 function inventory.check(number, item)

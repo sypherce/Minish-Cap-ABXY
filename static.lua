@@ -7,6 +7,8 @@ local static = {
 	-- 030010D0 start menu open, 1 = true, use indicator instead
 	MENU_STATUS_UNOPENED = 0x00,
 	MENU_STATUS_ITEMS = 0x01,
+	MENU_STATUS_QUEST_STATUS = 0x02,
+	MENU_STATUS_MAP = 0x04,
 	MENU_STATUS_CLOSED = 0x0e,
 
 	ACTIVE_ITEM_NIL = 0,

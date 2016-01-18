@@ -1,3 +1,6 @@
+local addr = require(base_folder .. "addresses")
+local static = require(base_folder .. "static")
+
 local gba_memory = {
 }
 
@@ -24,9 +27,8 @@ function gba_memory.GBASpritePosXWrite(sprite, value)
 	if (value >= 0) and (value <= 255) then
 		memory.writebyte(addr.GBASpritePosX(sprite), value)
 	else
-		DebugLog("Invalid GBASpritePosXWrite Value ".. value)
+		DebugLog("Invalid GBASpritePosXWrite Value ".. value .. ", (band) " .. bit.band(value, 255))
 		memory.writebyte(addr.GBASpritePosX(sprite), bit.band(value, 255))
-		DebugLog("Invalid GBASpritePosXWrite Value ".. bit.band(value, 255))
 	end
 end
 -- no value checking, negatives may not work
@@ -54,7 +56,7 @@ function gba_memory.ReadSpriteByTile(tile_number, id_start, id_end)
 			return i
 		end
 	end
-	DebugLog("ReadSpriteByTile: Tile not found")
+	--DebugLog("ReadSpriteByTile: Tile not found")
 	return nil
 end
 
@@ -95,10 +97,23 @@ function gba_memory.SetItemCursor(value)
 end
 
 function gba_memory.ItemsMenuActive()
-	--local current_start_page = memory.readbyte(addr.start_page)
-	
 	local current_start_page = memory.readbyte(addr.menu_state)
 	if (current_start_page == static.MENU_STATUS_ITEMS) then
+		return true
+	elseif (current_start_page == static.MENU_STATUS_QUEST_STATUS 
+	or current_start_page == static.MENU_STATUS_MAP) then
+		local start_page_changing = memory.readbyte(addr.start_page_changing);
+		if(start_page_changing == 0) then
+			return true
+		end
+	else
+	end
+
+	return false
+end
+function gba_memory.ItemsMenuDeactivating()
+	local temp_items_or_world = memory.readbyte(addr.temp_items_or_world)
+	if(temp_items_or_world == 2 or temp_items_or_world == 3) then
 		return true
 	end
 
@@ -107,7 +122,8 @@ end
 
 function gba_memory.MenuActive()
 	local value_menu_state = memory.readbyte(addr.menu_state)
-	if (value_menu_state ~= static.MENU_STATUS_INIT) and (value_menu_state ~= static.MENU_STATUS_CLOSED) then
+	if (value_menu_state ~= static.MENU_STATUS_INIT)
+	and (value_menu_state ~= static.MENU_STATUS_CLOSED) then
 		return true
 	end
 

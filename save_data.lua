@@ -1,3 +1,4 @@
+local inventory = require(base_folder .. "inventory")
 --button save data
 
 function read_button(file)
@@ -16,26 +17,46 @@ local save_data = {
 
 }
 
-function save_data.load_buttons()
-	console.log("save_data.load_buttons()")
-
+--find and return the save filename
+function save_data.find_save_file()
 	local file = io.open(base_folder .. "buttons.sav", "r")
-		CurrentItem.x = read_button(file)
-		CurrentItem.y = read_button(file)
-		CurrentItem.r = read_button(file)
-		-- close the open file
+	if (file) then
+		return base_folder .. "buttons.sav"
+	else
+		return "buttons.sav"
+	end
+end
+
+function save_data.load_buttons()
+	DebugLog("save_data.load_buttons()")
+
+	--try to open buttons save file
+	local file = io.open(save_data.find_save_file(), "r")
+		--if the file is not open, abort the function
+		if (file == nil) then
+			do return end
+		end
+
+		inventory.CurrentItem.x = read_button(file)
+		inventory.CurrentItem.y = read_button(file)
+		inventory.CurrentItem.r = read_button(file)
+	-- close the open file
 	file:close()
 end
 
 function save_data.save_buttons()
-	console.log("save_data.save_buttons()")
+	DebugLog("save_data.save_buttons()")
 
-	--open buttons save file
-	local file = io.open(base_folder .. "buttons.sav", "w+")
-		write_button(file, CurrentItem.x)
-		
-		write_button(file, CurrentItem.y)
-		write_button(file, CurrentItem.r)
+	--try to open buttons save file
+	local file = io.open(save_data.find_save_file(), "w+")
+		--if the file is not open, abort the function
+		if (file == nil) then
+			do return end
+		end
+
+		write_button(file, inventory.CurrentItem.x)
+		write_button(file, inventory.CurrentItem.y)
+		write_button(file, inventory.CurrentItem.r)
 	-- close the open file
 	file:close()
 end

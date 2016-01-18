@@ -1,3 +1,8 @@
+local addr = require(base_folder .. "addresses")
+local static = require(base_folder .. "static")
+local inventory = require(base_folder .. "inventory")
+local gba_memory = require(base_folder .. "gba_memory")
+
 local image_folder = base_folder .. "images/"
 
 local Images = {
@@ -110,7 +115,24 @@ function draw.Hud()
 						local loading_menu = memory.readbyte(addr.going_to_menu)
 						if(loading_menu == 0) then
 							Pos.BaseX = gba_memory.GBASpritePosXRead(SpriteB) - 9
-							Pos.BaseY = gba_memory.GBASpritePosYRead(SpriteB) - 18
+							
+							--this next check keeps the screen from freaking out
+							--at the end of the transition something weird happens
+							--with the B sprite and in ram it jumps around for some reason
+							--this probably could be fixed somehow but I'm not sure what's happening
+							--so we get a hack :)
+							if(Pos.BaseX ~= 169) then
+								Pos.BaseX = SavedBaseX
+								Pos.BaseY = SavedBaseY
+							else
+								Pos.BaseY = gba_memory.GBASpritePosYRead(SpriteB) - 18
+								if (Pos.BaseX ~= SavedBaseX) then
+									console.log("BaseX " .. Pos.BaseX)
+								end
+								if (Pos.BaseY ~= SavedBaseY) then
+									console.log("BaseY " .. Pos.BaseY)
+								end
+							end
 						else
 							Pos.BaseX = SavedBaseX
 							Pos.BaseY = SavedBaseY
@@ -151,11 +173,11 @@ function draw.Hud()
 						gui.drawImage(image_folder .. "X.png",	Pos.BaseX + Pos.XButton_X, Pos.BaseY + Pos.XButton_Y)
 						gui.drawImage(image_folder .. "Y.png",	Pos.BaseX + Pos.YButton_X, Pos.BaseY + Pos.YButton_Y)
 						gui.drawImage(image_folder .. "zr.png",	Pos.BaseX + Pos.ZRButton_X, Pos.BaseY + Pos.ZRButton_Y)
-						gui.drawImage(Images[CurrentItem.r],				Pos.BaseX + Pos.RItem_X, Pos.BaseY + Pos.RItem_Y)
-						gui.drawImage(Images[CurrentItem.l],				Pos.BaseX + Pos.LItem_X, Pos.BaseY + Pos.LItem_Y)
-						gui.drawImage(Images[CurrentItem.zr],				Pos.BaseX + Pos.ZRItem_X, Pos.BaseY + Pos.ZRItem_Y)
-						gui.drawImage(Images[CurrentItem.x],				Pos.BaseX + Pos.XItem_X, Pos.BaseY + Pos.XItem_Y)
-						gui.drawImage(Images[CurrentItem.y],				Pos.BaseX + Pos.YItem_X, Pos.BaseY + Pos.YItem_Y)
+						gui.drawImage(Images[inventory.CurrentItem.r],				Pos.BaseX + Pos.RItem_X, Pos.BaseY + Pos.RItem_Y)
+						gui.drawImage(Images[inventory.CurrentItem.l],				Pos.BaseX + Pos.LItem_X, Pos.BaseY + Pos.LItem_Y)
+						gui.drawImage(Images[inventory.CurrentItem.zr],				Pos.BaseX + Pos.ZRItem_X, Pos.BaseY + Pos.ZRItem_Y)
+						gui.drawImage(Images[inventory.CurrentItem.x],				Pos.BaseX + Pos.XItem_X, Pos.BaseY + Pos.XItem_Y)
+						gui.drawImage(Images[inventory.CurrentItem.y],				Pos.BaseX + Pos.YItem_X, Pos.BaseY + Pos.YItem_Y)
 							
 						for Item=static.INVENTORY_ID.BOMB_1, static.INVENTORY_ID.BOMB_2 do 
 							if(ItemActive(Item) == static.ACTIVE_ITEM_X) then
@@ -181,18 +203,37 @@ function draw.Hud()
 end
 
 function ItemActive(Item)
-	if(CurrentItem.x == Item) then
+	if(inventory.CurrentItem.x == Item) then
 		return static.ACTIVE_ITEM_X
-	elseif(CurrentItem.y == Item) then
+	elseif(inventory.CurrentItem.y == Item) then
 		return static.ACTIVE_ITEM_Y
-	elseif(CurrentItem.r == Item) then
+	elseif(inventory.CurrentItem.r == Item) then
 		return static.ACTIVE_ITEM_R
 	else
-		DebugLog("ItemActive: Item not active #" .. Item)
+		--DebugLog("ItemActive: Item not active #" .. Item)
 		return static.ACTIVE_ITEM_NIL
 	end
 end
 
+function draw.HideRealHudItems()
+	local SpriteB = gba_memory.ReadSpriteByTile(static.TILE_ID.B_BUTTON)
+	if (SpriteB == nil) then
+		return
+	end
+	local menu_banner_y_position = memory.readbyte(addr.menu_banner_y_position)
+	LoopStart = 4
+	if (menu_banner_y_position == 16) then--if menu is hidden, sprites change
+		LoopStart = 2
+	end
+	local LoopEnd = SpriteB
+	
+	for i = LoopStart, LoopEnd do 
+		local spriteID = gba_memory.ReadGBASpriteID(i)
+		if((spriteID ~= static.TILE_ID.R_TEXT_1) and (spriteID ~= static.TILE_ID.R_TEXT_2) and (spriteID ~= static.TILE_ID.R_BUTTON_1)) then
+			gba_memory.HideSprite(i)
+		end
+	end
+end
 
 function draw.ItemsMenuHud()
 	local Pos = {
@@ -220,22 +261,14 @@ function draw.ItemsMenuHud()
 	Pos.ZRItem_X = 60
 	Pos.ZRItem_Y = 63 
 
+	draw.HideRealHudItems()
+	
 	local SpriteB = gba_memory.ReadSpriteByTile(static.TILE_ID.B_BUTTON)
 	if (SpriteB == nil) then
 		return
 	end
-	LoopStart = 4
-	LoopEnd = SpriteB
 	Pos.BaseX = gba_memory.GBASpritePosXRead(SpriteB) - 178
 	Pos.BaseY = gba_memory.GBASpritePosYRead(SpriteB) - 11
-	
---if (SpriteB ~= nil) then
-	for i = LoopStart, LoopEnd do 
-		local spriteID = gba_memory.ReadGBASpriteID(i)
-		if((spriteID ~= static.TILE_ID.R_TEXT_1) and (spriteID ~= static.TILE_ID.R_TEXT_2) and (spriteID ~= static.TILE_ID.R_BUTTON_1)) then
-			gba_memory.HideSprite(i)
-		end
-	end
 	
 	--draw buttons
 	gui.drawImage(image_folder .. "R.png",	Pos.BaseX + Pos.RButton_X, Pos.BaseY + Pos.RButton_Y)
@@ -243,9 +276,9 @@ function draw.ItemsMenuHud()
 	gui.drawImage(image_folder .. "Y.png",	Pos.BaseX + Pos.YButton_X, Pos.BaseY + Pos.YButton_Y)
 	
 	--draw items on buttons
-	gui.drawImage(Images[CurrentItem.r],				Pos.BaseX + Pos.RItem_X, Pos.BaseY + Pos.RItem_Y)
-	gui.drawImage(Images[CurrentItem.x],				Pos.BaseX + Pos.XItem_X, Pos.BaseY + Pos.XItem_Y)
-	gui.drawImage(Images[CurrentItem.y],				Pos.BaseX + Pos.YItem_X, Pos.BaseY + Pos.YItem_Y)
+	gui.drawImage(Images[inventory.CurrentItem.r],				Pos.BaseX + Pos.RItem_X, Pos.BaseY + Pos.RItem_Y)
+	gui.drawImage(Images[inventory.CurrentItem.x],				Pos.BaseX + Pos.XItem_X, Pos.BaseY + Pos.XItem_Y)
+	gui.drawImage(Images[inventory.CurrentItem.y],				Pos.BaseX + Pos.YItem_X, Pos.BaseY + Pos.YItem_Y)
 		
 	--draw bomb and bow digits
 	for Item=static.INVENTORY_ID.BOMB_1, static.INVENTORY_ID.BOMB_2 do 
@@ -269,9 +302,9 @@ function draw.ItemsMenuHud()
 
 	--draw set items cover
 	gui.drawImage(image_folder .. "ItemCover.png",	36, 31)
-	gui.drawImage(Images[CurrentItem.b],				Pos.BItem_X, Pos.BItem_Y)
-	gui.drawImage(Images[CurrentItem.zr],				Pos.ZRItem_X, Pos.ZRItem_Y)
-	gui.drawImage(Images[CurrentItem.l],				Pos.LItem_X, Pos.LItem_Y)
+	gui.drawImage(Images[inventory.CurrentItem.b],				Pos.BItem_X, Pos.BItem_Y)
+	gui.drawImage(Images[inventory.CurrentItem.zr],				Pos.ZRItem_X, Pos.ZRItem_Y)
+	gui.drawImage(Images[inventory.CurrentItem.l],				Pos.LItem_X, Pos.LItem_Y)
 
 --end
 end
