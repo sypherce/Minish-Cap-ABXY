@@ -1,6 +1,8 @@
 --Static Values
 
 local static = {
+	GAME_TITLE = "Legend of Zelda, The - The Minish Cap",
+
 	-- 02000095 current start menu page, 0 = items
 	-- 02034491 start page, use indicator instead
 	-- 020344a4 start indicator 00 or 0E when not in start menu, start page when in menu

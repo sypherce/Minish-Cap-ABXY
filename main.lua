@@ -105,10 +105,10 @@ end]]--
 do -- main()
 	-- check what game is loaded, if it's not minish cap, wait for it
 	console.clear()
-	if (bizstring.startswith(gameinfo.getromname(), "Legend of Zelda, The - The Minish Cap") == false) then
+	if (bizstring.startswith(gameinfo.getromname(), static.GAME_TITLE) == false) then
 		console.log("No game or wrong game loaded. Please try again.")
 	end
-	while (bizstring.startswith(gameinfo.getromname(), "Legend of Zelda, The - The Minish Cap") == false) do
+	while (bizstring.startswith(gameinfo.getromname(), static.GAME_TITLE) == false) do
 		emu.frameadvance()
 	end
 
