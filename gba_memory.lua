@@ -41,7 +41,7 @@ function gba_memory.ReadMenuItem(number)
 end
 
 function gba_memory.ReadGBASpriteID(tile_number)
-	if(tile_number <0) and (tile_number > 127) then
+	if(tile_number <0) and (tile_number > 1023) then
 		DebugLog("ReadGBASpriteID: Invalid Tile Number " .. tile_number)
 		return nil 
 	end
@@ -50,7 +50,7 @@ end
 
 function gba_memory.ReadSpriteByTile(tile_number, id_start, id_end)
 	id_start = id_start or 0
-	id_end = id_end or 127
+	id_end = id_end or 1023
 	for i=id_start,id_end do 
 		if(gba_memory.ReadGBASpriteID(i) == tile_number) then
 			return i
@@ -84,7 +84,7 @@ function gba_memory.HideSprite(number)
 	local sprite_address = addr.GBASprite(number)
 	if (sprite_address ~= nil) then--this may have been coming up nil before.
 		local sprite_data = memory.read_u16_le(sprite_address)
-		sprite_data = bit.bor(sprite_data, 512)
+		sprite_data = bit.set(sprite_data, 9)
 		memory.write_u16_le(sprite_address, sprite_data)
 	else
 		DebugLog("HideSprite: Sprite not found #" .. number)
