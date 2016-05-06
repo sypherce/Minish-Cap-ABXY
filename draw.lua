@@ -3,7 +3,7 @@ local static = require(base_folder .. "static")
 local inventory = require(base_folder .. "inventory")
 local gba_memory = require(base_folder .. "gba_memory")
 
-local image_folder = base_folder .. "images/"
+local image_folder = "images/"
 
 local Images = {
 	[static.INVENTORY_ID.SWORD_1] = image_folder .. "sword0.png",
