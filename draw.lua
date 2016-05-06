@@ -126,12 +126,13 @@ function draw.Hud()
 								Pos.BaseY = SavedBaseY
 							else
 								Pos.BaseY = gba_memory.GBASpritePosYRead(SpriteB) - 18
+								--[[debug
 								if (Pos.BaseX ~= SavedBaseX) then
 									console.log("BaseX " .. Pos.BaseX)
 								end
 								if (Pos.BaseY ~= SavedBaseY) then
 									console.log("BaseY " .. Pos.BaseY)
-								end
+								end]]--
 							end
 						else
 							Pos.BaseX = SavedBaseX

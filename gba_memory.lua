@@ -22,6 +22,33 @@ function gba_memory.GBASpritePosYRead(number)
 	return memory.read_s8(addr.GBASpritePosY(number))
 end
 
+function gba_memory.GBAReadOAMATTR0(number)
+	return memory.read_u16_le(addr.GBASprite(number))
+end
+function gba_memory.GBAReadOAMATTR1(number)
+	return memory.read_u16_le(addr.GBASprite(number) + 2)
+end
+function gba_memory.GBAReadOAMATTR2(number)
+	return memory.read_u16_le(addr.GBASprite(number) + 4)
+end
+function gba_memory.GBAReadOAMATTR3(number)
+	return memory.read_u16_le(addr.GBASprite(number) + 6)
+end
+
+
+function gba_memory.GBAWriteOAMATTR0(number, value)
+	return memory.write_u16_le(addr.GBASprite(number), value)
+end
+function gba_memory.GBAWriteOAMATTR1(number, value)
+	return memory.write_u16_le(addr.GBASprite(number) + 2, value)
+end
+function gba_memory.GBAWriteOAMATTR2(number, value)
+	return memory.write_u16_le(addr.GBASprite(number) + 4, value)
+end
+function gba_memory.GBAWriteOAMATTR3(number, value)
+	return memory.write_u16_le(addr.GBASprite(number) + 6, value)
+end
+
 -- no value checking, negatives may not work
 function gba_memory.GBASpritePosXWrite(sprite, value)
 	if (value >= 0) and (value <= 255) then
@@ -89,6 +116,28 @@ function gba_memory.HideSprite(number)
 	else
 		DebugLog("HideSprite: Sprite not found #" .. number)
 	end
+end
+
+function gba_memory.SetSpritePriority(number, priority)
+	local ATTR2 = gba_memory.GBAReadOAMATTR2(number)
+
+	if(priority == 0)then--00b,0u
+		ATTR2 = bit.clear(ATTR2, 10)
+		ATTR2 = bit.clear(ATTR2,11)
+	elseif(priority == 1)then--01b,1u
+		ATTR2 = bit.clear(ATTR2,10)
+		ATTR2 = bit.set(ATTR2,11)
+	elseif(priority == 2)then--10b,2u
+		ATTR2 = bit.set(ATTR2,10)
+		ATTR2 = bit.clear(ATTR2,11)
+	elseif(priority == 3)then--11b,3u
+		ATTR2 = bit.set(ATTR2,10)
+		ATTR2 = bit.set(ATTR2,11)
+	else
+		console.log("Error!!!!FIXMESSAGE")
+		return nil--fix return?
+	end
+	gba_memory.GBAWriteOAMATTR2(number, ATTR2)
 end
 
 function gba_memory.SetItemCursor(value)
